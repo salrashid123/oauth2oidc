@@ -64,7 +64,7 @@ Then git clone this repo and specify the audience value above as well as the cli
 Ignore the creds.json..this will contain the `access_token`, `refresh_token` and cached `id_token`.  Remember to keep this safe!
 
 ```bash
-go run oauth2oidc.go --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com  \
+go run main.go --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com  \
    --credential_file=creds.json \
    --client_secrets_file=client_secret.json
 ```

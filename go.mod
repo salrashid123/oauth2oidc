@@ -1,8 +1,9 @@
-module github.com/salrashid123/oauth2oidc
+module main
 
 go 1.15
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
+	github.com/salrashid123/oauth2oidc v0.0.0
 )
+
+replace github.com/salrashid123/oauth2oidc => ./oauth2oidc
