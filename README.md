@@ -2,6 +2,8 @@
 
 Utility function that exchanges a user `refresh_token` for a Google `OpenID Connect (OIDC)` token with a user-defined audience.
 
+>> This is not an officially supported Google product
+
 Many services like Google Cloud Run, Cloud Functions, apps behind IAP, etc require `OpenID Connect Tokens`. 
 
 An OIDC token that these services receive usually must include an `audience (aud:)` claim that specifies the service name it is intended for.  For example, for a Cloud Run service called `https://foo.bar.run.app` the audience claim must match that value.  For IAP, it must match the `client_id` associated with the IAP protection being enforced (see [Authenticating from a desktop app](https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_a_desktop_app))
@@ -34,7 +36,7 @@ You can follow [this](https://cloud.google.com/iap/docs/programmatic-oauth-clien
 
 So, lets make this easier and have a small script that does (some) of this
 
-What w'ere going to do is create a small application that performs 3LO and then acquires an id_token for a given audience
+What we're going to do is create a small application that performs 3LO and then acquires an id_token for a given audience
 
 #### Download client_secrets.json
 
@@ -43,11 +45,12 @@ First create `client_secrets.json` in _the same project where IAP runs ...or mor
 IN the cloud console, goto
 
 `API & Services -> Credentials`  
-  `Create Credentials`  
-     select `OAuth client ID`
-     select `Desktop App`
-     select `Create`
-     select `Download JSON`
+
+  - `Create Credentials`  
+  - select `OAuth client ID`
+  - select `Desktop App`
+  - select `Create`
+  - select `Download JSON`
 
 ![images/desktop_app.png](images/desktop_app.png)
 
@@ -57,17 +60,51 @@ IN the cloud console, goto
 
 Find the oauth2 `client_id` **FOR** IAP as describe [here](https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_a_service_account)...i know, it talks about service accounts but we will use it anyway!
 
-### CLI
+
+### Usage
+
+#### as CLI
 
 Then git clone this repo and specify the audience value above as well as the client_id/secrets file you downloaded earlier.
 
 Ignore the creds.json..this will contain the `access_token`, `refresh_token` and cached `id_token`.  Remember to keep this safe!
 
 ```bash
-go run main.go --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com  \
+cd cmd/
+go run oauth2oidc.go --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com  \
    --credential_file=creds.json \
    --client_secrets_file=client_secret.json
 ```
+
+Or use pre-genreated binary found in the "Releases" section
+
+
+#### as Docker
+
+You can use the Dockerhub binary at `salrashid123/oauth2oidc`:
+
+The following command places the required `client_secret.json` file under a volume mounted at `/creds`
+
+```
+docker run -ti  -v `pwd`/creds:/creds:rw salrashid123/oauth2oidc:latest \
+  --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com \
+  --credential_file=/creds/creds.json --client_secrets_file=/creds/client_secret.json
+```
+
+### as Library
+
+```golang
+import (
+	"github.com/salrashid123/oauth2oidc"
+)
+
+  flAudience := "1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com"
+  client_id := "1071284184436-vplkpq4ntj09kbqjj41b353hm7liuqab.apps.googleusercontent.com"
+  client_secret := "redacted"
+  refreshToken :=  "clearlyredacted"
+	r, err := oauth2oidc.GetIdToken(flAudience, client_id, client_secret, refreshToken)
+```
+
 
 The output will be the id token you can use against IAP 
 

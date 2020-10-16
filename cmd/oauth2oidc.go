@@ -17,19 +17,21 @@ import (
 
 var (
 	flCredentialFile    = flag.String("credential_file", "creds.json", "Credential file with access_token, refresh_token")
-	flClientSecretsFile = flag.String("client_secrets_file", "client_secrets.json", "(required) client secrets json file")
+	flClientSecretsFile = flag.String("client_secrets_file", "", "(required) client secrets json file")
 	flAudience          = flag.String("audience", "", "(required) Audience for the token")
-	flUseCache          = flag.Bool("use_cach", false, "force a new token")
+	flUseCache          = flag.Bool("use_cache", false, "force a new token")
 )
 
 func main() {
 
 	flag.Parse()
 	if *flClientSecretsFile == "" {
-		log.Fatalf("specify either --client_secrets_file must be set")
+		flag.PrintDefaults()
+		log.Fatalf("--client_secrets_file must be set")
 	}
 
 	if *flAudience == "" {
+		flag.PrintDefaults()
 		log.Fatalf("--audience must be set")
 	}
 
