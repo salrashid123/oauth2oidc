@@ -22,17 +22,18 @@ run `gcloud auth print-identity-token` and decode the jwt at [jwt.io](jwt.io).  
 
 ---
 
-#### `What about Bob (IAP)?`
+#### `What about Bob?`
 
 What about IAP or any other service?  I want to mint an `id_token` for a service where i specify the audience...
 
 On GCP, you can acquire an `id_token` for a user iff the `client_id`/`client_secret` and audience specified is a  `client_id` are within the _same GCP project_. (yeah, pretty specific).
 
-In other words (and probably not clarifying!), you need to run a 2LO with a `client_id/secret` and then exchange the `refresh_token` you acquire through that for yet another token (!) in which you specify an `aud` value which happens to be a `client_id` thats valid in the same project (whew!)
+In other words (and probably not clarifying!), you need to run a 3LO with a `client_id/secret` and then exchange the `refresh_token` you acquire through that for yet another token (!) in which you specify an `aud` value which happens to be for a `client_id` thats associated in the same project (whew!)
+
+..right..
 
 You can follow [this](https://cloud.google.com/iap/docs/programmatic-oauth-clients#end_user_authentication) guide which is limited (i.e, gcloud or svc accounts) or  follow in  excruciating details these steps: ([Authenticating from a desktop app](https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_a_desktop_app))
 
-..right..
 
 So, lets make this easier and have a small script that does (some) of this
 
@@ -91,7 +92,7 @@ docker run -ti  -v `pwd`/creds:/creds:rw salrashid123/oauth2oidc:latest \
   --credential_file=/creds/creds.json --client_secrets_file=/creds/client_secret.json
 ```
 
-### as Library
+#### as Library
 
 ```golang
 import (
