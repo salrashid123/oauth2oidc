@@ -1,6 +1,10 @@
 ### oauth2oidc
 
-Utility function that exchanges a user `refresh_token` for a Google `OpenID Connect (OIDC)` token with a user-defined audience.
+Utility function that exchanges a *user* `refresh_token` for a Google `OpenID Connect (OIDC)` token for specific audiences.
+
+The audience value for the ODIC token must match the `client_id` associated with the project where you acquired the `client_id` and `client_secret` that facilitated the flow
+
+One use is to invoke IAP in your project using your user credentials (assuming the client id was generated on the same project as IAP)
 
 >> This is not an officially supported Google product
 
