@@ -26,7 +26,7 @@ run `gcloud auth print-identity-token` and decode the jwt at [jwt.io](jwt.io).  
 
 What about IAP or any other service?  I want to mint an `id_token` for a service where i specify the audience...
 
-On GCP, you can acquire an `id_token` for a user iff the `client_id`/`client_secret` and audience specified is a  `client_id` are within the _same GCP project_. (yeah, pretty specific).
+Well you can but in a _very limited way_:  On GCP, you can acquire an `id_token` for a user iff the `client_id`/`client_secret` and audience specified is a  `client_id` are within the _same GCP project_. (yeah, pretty specific).
 
 In other words (and probably not clarifying!), you need to run a 3LO with a `client_id/secret` and then exchange the `refresh_token` you acquire through that for yet another token (!) in which you specify an `aud` value which happens to be for a `client_id` thats associated in the same project (whew!)
 
@@ -72,13 +72,10 @@ Ignore the creds.json..this will contain the `access_token`, `refresh_token` and
 
 ```bash
 cd cmd/
-go run oauth2oidc.go --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com  \
+go run main.go --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com  \
    --credential_file=creds.json \
    --client_secrets_file=client_secret.json
 ```
-
-Or use pre-genreated binary found in the "Releases" section
-
 
 #### as Docker
 
@@ -99,11 +96,12 @@ import (
 	"github.com/salrashid123/oauth2oidc"
 )
 
-  flAudience := "1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com"
-  client_id := "1071284184436-vplkpq4ntj09kbqjj41b353hm7liuqab.apps.googleusercontent.com"
-  client_secret := "redacted"
-  refreshToken :=  "clearlyredacted"
-	r, err := oauth2oidc.GetIdToken(flAudience, client_id, client_secret, refreshToken)
+flAudience := "1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com"
+client_id := "1071284184436-vplkpq4ntj09kbqjj41b353hm7liuqab.apps.googleusercontent.com"
+client_secret := "redacted"
+refreshToken :=  "clearlyredacted"
+r, err := oauth2oidc.GetIdToken(flAudience, client_id, client_secret, refreshToken)
+fmt.Printf("%s",r.IDToken)
 ```
 
 
@@ -135,7 +133,7 @@ eg, the token should show your user id as the `sub` and the target audience you 
 - [OAuth 2.0 for Mobile & Desktop Apps](https://developers.google.com/identity/protocols/oauth2/native-app)
 
 
-For refernece, this is what a sample client_secrets and credentials file looks like
+For reference, this is what a sample client_secrets and credentials file looks like
 
 ```bash
 $ cat client_secret.json | jq '.'

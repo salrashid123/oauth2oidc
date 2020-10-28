@@ -27,7 +27,7 @@ const (
 	tokenURL           = "https://oauth2.googleapis.com/token"
 )
 
-func GetIdToken(audience, clientId, clientSecret, refreshToken string) (idToken string, err error) {
+func GetIdToken(audience, clientId, clientSecret, refreshToken string) (tresp *TokenResponse, err error) {
 	data := url.Values{
 		"client_id":     {clientId},
 		"client_secret": {clientSecret},
@@ -38,24 +38,24 @@ func GetIdToken(audience, clientId, clientSecret, refreshToken string) (idToken 
 
 	resp, err := http.PostForm(tokenURL, data)
 	if err != nil {
-		return "", nil
+		return &TokenResponse{}, nil
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		b, _ := ioutil.ReadAll(resp.Body)
-		return "", errors.New(fmt.Sprintf("Error exchaning token: %s", b))
+		return &TokenResponse{}, errors.New(fmt.Sprintf("Error exchaning token: %s", b))
 	}
 
 	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return "", err
+		return &TokenResponse{}, err
 	}
 
 	tokenRes := &TokenResponse{}
 
 	if err := json.Unmarshal(body, tokenRes); err != nil {
-		return "", err
+		return &TokenResponse{}, err
 	}
 	token := &oauth2.Token{
 		AccessToken: tokenRes.AccessToken,
@@ -64,18 +64,17 @@ func GetIdToken(audience, clientId, clientSecret, refreshToken string) (idToken 
 	raw := make(map[string]interface{})
 	json.Unmarshal(body, &raw)
 	token = token.WithExtra(raw)
-
 	if secs := tokenRes.ExpiresIn; secs > 0 {
 		token.Expiry = time.Now().Add(time.Duration(secs) * time.Second)
 	}
 	if v := tokenRes.IDToken; v != "" {
 		claimSet, err := jws.Decode(v)
 		if err != nil {
-			return "", err
+			return &TokenResponse{}, err
 		}
 		token.Expiry = time.Unix(claimSet.Exp, 0)
 	}
 	tokenRes.RefreshToken = refreshToken
 
-	return tokenRes.IDToken, nil
+	return tokenRes, nil
 }

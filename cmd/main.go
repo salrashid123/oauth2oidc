@@ -77,14 +77,14 @@ func main() {
 			parser = new(jwt.Parser)
 			tt, _, err := parser.ParseUnverified(tok.IDToken, &jwt.StandardClaims{})
 			if err != nil {
-				log.Fatalf("Could not parse saved id_tokne File %v", err)
+				log.Fatalf("Could not parse saved id_token File %v", err)
 			}
 
 			c, ok := tt.Claims.(*jwt.StandardClaims)
 			err = tt.Claims.Valid()
 			if ok && err == nil {
 				if c.Audience == *flAudience {
-					fmt.Printf("%s\n", tt.Raw)
+					fmt.Printf("%s\n", tok.IDToken)
 					return
 				}
 			}
@@ -93,17 +93,16 @@ func main() {
 	}
 	r, err := oauth2oidc.GetIdToken(*flAudience, conf.ClientID, conf.ClientSecret, refreshToken)
 	if err != nil {
-		log.Fatalf("Could not parse saved id_tokne File %v", err)
+		log.Fatalf("Could not acquire id_token.  Verify the client_id and audience client_id are in the same GCP project --\n%v", err)
+		return
 	}
-
-	tok.IDToken = r
 
 	f, err := os.OpenFile(*flCredentialFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		log.Fatalf("Could not parse saved id_tokne File %v", err)
+		log.Fatalf("Could not save credentials File %v", err)
 	}
 	defer f.Close()
-	json.NewEncoder(f).Encode(tok)
+	json.NewEncoder(f).Encode(r)
 
-	fmt.Printf("%s\n", r)
+	fmt.Printf("%s\n", r.IDToken)
 }
