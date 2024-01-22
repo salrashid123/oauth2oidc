@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
@@ -43,11 +42,11 @@ func GetIdToken(audience, clientId, clientSecret, refreshToken string) (tresp *T
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		b, _ := ioutil.ReadAll(resp.Body)
-		return &TokenResponse{}, errors.New(fmt.Sprintf("Error exchaning token: %s", b))
+		b, _ := io.ReadAll(resp.Body)
+		return &TokenResponse{}, errors.New(fmt.Sprintf("Error exchange token: %s", b))
 	}
 
-	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
 		return &TokenResponse{}, err
 	}

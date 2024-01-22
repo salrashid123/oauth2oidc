@@ -1,3 +1,20 @@
+```
+
+gcloud auth application-default login  --client-id-file=/home/srashid/gcp_misc/certs/client_secret_desktop-app.json
+
+$ cat /home/srashid/.config/gcloud/application_default_credentials.json 
+{
+  "client_id": "995081019036-e1b93jttd8f5ssndi2iupr87pe01pene.apps.googleusercontent.com",
+  "client_secret": "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",
+  "refresh_token": "1//05M1l7ZkeR0qTCgYIARAAGAUSNwF-L9IrZBmUgJhBkgJhRs7R8TXPvrqLQGNrGlXV662EL7Spitmq6qcNAO2-4U2gMsFMPYcHEIU",
+  "type": "authorized_user"
+}
+
+
+ go run cmd/main.go --audience=995081019036-9jdnn1fv8mddsbsnpn70edta8feviv7k.apps.googleusercontent.com     --adc_file=application_default_credentials.json
+
+```
+
 ### oauth2oidc
 
 Utility function that exchanges a *user* `refresh_token` for a Google `OpenID Connect (OIDC)` token for specific audiences.
@@ -61,10 +78,23 @@ IN the cloud console, goto
 
 ![images/download_json.png](images/download_json.png)
 
+
+### Acquire Initial RefreshToken
+
+Now use the `gcloud` cli to populate acquire the refresh token while using the custom `client_secrets.json`
+
+```bash
+gcloud auth application-default login  --client-id-file=/path/to/client_secrets.json
+
+# now *move* the adc file to its own location 
+mv $HOME/.config/gcloud/application_default_credentials.json $HOME/.config/gcloud/custom_application_default_credentials.json
+```
+
 ### Get the Audience value for IAP
 
 Find the oauth2 `client_id` **FOR** IAP as describe [here](https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_a_service_account)...i know, it talks about service accounts but we will use it anyway!
 
+In my case its `1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com`
 
 ### Usage
 
@@ -75,10 +105,8 @@ Then git clone this repo and specify the audience value above as well as the cli
 Ignore the creds.json..this will contain the `access_token`, `refresh_token` and cached `id_token`.  Remember to keep this safe!
 
 ```bash
-cd cmd/
-go run main.go --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com  \
-   --credential_file=creds.json \
-   --client_secrets_file=client_secret.json
+go run cmd/main.go --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com  \
+     --adc_file=$HOME/.config/gcloud/custom_application_default_credentials.json
 ```
 
 #### as Docker
@@ -87,10 +115,10 @@ You can use the Dockerhub binary at `salrashid123/oauth2oidc`:
 
 The following command places the required `client_secret.json` file under a volume mounted at `/creds`
 
-```
-docker run -ti  -v `pwd`/creds:/creds:rw salrashid123/oauth2oidc:latest \
+```bash
+docker run -ti  -v $HOME/.config/gcloud/custom_application_default_credentials.json:/custom_application_default_credentials.json:r salrashid123/oauth2oidc:latest \
   --audience=1071284184436-vu96hfaugnm9falak0pl00ur9cuvldl2.apps.googleusercontent.com \
-  --credential_file=/creds/creds.json --client_secrets_file=/creds/client_secret.json
+  --adc_file=/custom_application_default_credentials.json
 ```
 
 #### as Library
@@ -135,37 +163,5 @@ eg, the token should show your user id as the `sub` and the target audience you 
 - [gRPC Authentication with Google OpenID Connect tokens](https://github.com/salrashid123/grpc_google_id_tokens)
 - [Oauth2 Installed Application](https://developers.google.com/identity/protocols/oauth2#installed)
 - [OAuth 2.0 for Mobile & Desktop Apps](https://developers.google.com/identity/protocols/oauth2/native-app)
-
-
-For reference, this is what a sample client_secrets and credentials file looks like
-
-```bash
-$ cat client_secret.json | jq '.'
-{
-  "installed": {
-    "client_id": "1071284184436-vplkpq4ntj09kbqjj41b353hm7liuqab.apps.googleusercontent.com",
-    "project_id": "mineral-minutia-820",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_secret": "eirE9q-redacted",
-    "redirect_uris": [
-      "urn:ietf:wg:oauth:2.0:oob",
-      "http://localhost"
-    ]
-  }
-}
-```
-
-```bash
-$ cat creds.json | jq '.'
-{
-  "access_token": "ya29.a0AfH6SM-redacted",
-  "token_type": "Bearer",
-  "id_token": "eyJhbGciOiJSU-redacted",
-  "expires_in": 3599,
-  "refresh_token": "1//0dMd-redacted"
-}
-```
 
 

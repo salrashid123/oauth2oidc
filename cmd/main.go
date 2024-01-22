@@ -1,31 +1,31 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/salrashid123/oauth2oidc"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 var (
-	flCredentialFile    = flag.String("credential_file", "creds.json", "Credential file with access_token, refresh_token")
-	flClientSecretsFile = flag.String("client_secrets_file", "", "(required) client secrets json file")
-	flAudience          = flag.String("audience", "", "(required) Audience for the token")
-	flUseCache          = flag.Bool("use_cache", false, "force a new token")
+	flADCFile  = flag.String("adc_file", "", "(required) file to application default credentials file")
+	flAudience = flag.String("audience", "", "(required) Audience for the token")
 )
+
+type ADC struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	RefreshToken string `json:"refresh_token"`
+	Type         string `json:"type"`
+}
 
 func main() {
 
 	flag.Parse()
-	if *flClientSecretsFile == "" {
+	if *flADCFile == "" {
 		flag.PrintDefaults()
 		log.Fatalf("--client_secrets_file must be set")
 	}
@@ -35,74 +35,51 @@ func main() {
 		log.Fatalf("--audience must be set")
 	}
 
-	b, err := ioutil.ReadFile(*flClientSecretsFile)
+	var tok ADC
+
+	t, err := os.Open(*flADCFile)
 	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
+		log.Fatalf("Could not open credential File %v", err)
 	}
-	conf, err := google.ConfigFromJSON(b, oauth2oidc.UserInfoEmailScope)
+	defer t.Close()
+
+	err = json.NewDecoder(t).Decode(&tok)
 	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
+		log.Fatalf("Could not parse credential File %v", err)
 	}
 
-	var refreshToken string
-	var tok oauth2oidc.TokenResponse
-	_, err = os.Stat(*flCredentialFile)
-	if *flCredentialFile == "" || os.IsNotExist(err) {
-		lurl := conf.AuthCodeURL("code")
-		fmt.Printf("\nVisit the URL for the auth dialog and enter the authorization code  \n\n%s\n", lurl)
-		fmt.Printf("\nEnter code:  ")
-		input := bufio.NewScanner(os.Stdin)
-		input.Scan()
-
-		tok, err := conf.Exchange(oauth2.NoContext, input.Text())
-		if err != nil {
-			log.Fatalf("Cloud not exchange TOken %v", err)
-		}
-		refreshToken = tok.RefreshToken
-	} else {
-		f, err := os.Open(*flCredentialFile)
-		if err != nil {
-			log.Fatalf("Could not open credential File %v", err)
-		}
-		defer f.Close()
-
-		err = json.NewDecoder(f).Decode(&tok)
-		if err != nil {
-			log.Fatalf("Could not parse credential File %v", err)
-		}
-		refreshToken = tok.RefreshToken
-
-		if !*flUseCache {
-			var parser *jwt.Parser
-			parser = new(jwt.Parser)
-			tt, _, err := parser.ParseUnverified(tok.IDToken, &jwt.StandardClaims{})
-			if err != nil {
-				log.Fatalf("Could not parse saved id_token File %v", err)
-			}
-
-			c, ok := tt.Claims.(*jwt.StandardClaims)
-			err = tt.Claims.Valid()
-			if ok && err == nil {
-				if c.Audience == *flAudience {
-					fmt.Printf("%s\n", tok.IDToken)
-					return
-				}
-			}
-		}
-
-	}
-	r, err := oauth2oidc.GetIdToken(*flAudience, conf.ClientID, conf.ClientSecret, refreshToken)
+	r, err := oauth2oidc.GetIdToken(*flAudience, tok.ClientID, tok.ClientSecret, tok.RefreshToken)
 	if err != nil {
 		log.Fatalf("Could not acquire id_token.  Verify the client_id and audience client_id are in the same GCP project --\n%v", err)
 		return
 	}
 
-	f, err := os.OpenFile(*flCredentialFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		log.Fatalf("Could not save credentials File %v", err)
-	}
-	defer f.Close()
-	json.NewEncoder(f).Encode(r)
-
 	fmt.Printf("%s\n", r.IDToken)
+
+	// optionally use the token to call and endpoint (eg an application behind IAP)
+	// url := "https://core-eso.uc.r.appspot.com/"
+
+	// client := oauth2.NewClient(context.Background(), oauth2.StaticTokenSource(&oauth2.Token{
+	// 	AccessToken: r.IDToken,
+	// 	TokenType:   "Bearer",
+	// },
+	// ))
+	// if err != nil {
+	// 	log.Fatalf("Could not generate NewClient: %v", err)
+	// }
+
+	// req, err := http.NewRequest(http.MethodGet, url, nil)
+	// if err != nil {
+	// 	log.Fatalf("Error Creating HTTP Request: %v", err)
+	// }
+	// resp, err := client.Do(req)
+	// if err != nil {
+	// 	log.Fatalf("Error making authenticated call: %v", err)
+	// }
+	// bodyBytes, err := io.ReadAll(resp.Body)
+	// if err != nil {
+	// 	log.Fatalf("Error Reading response body: %v", err)
+	// }
+	// bodyString := string(bodyBytes)
+	// log.Printf("Authenticated Response: %v", bodyString)
 }
