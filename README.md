@@ -1,20 +1,3 @@
-```
-
-gcloud auth application-default login  --client-id-file=/home/srashid/gcp_misc/certs/client_secret_desktop-app.json
-
-$ cat /home/srashid/.config/gcloud/application_default_credentials.json 
-{
-  "client_id": "995081019036-e1b93jttd8f5ssndi2iupr87pe01pene.apps.googleusercontent.com",
-  "client_secret": "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",
-  "refresh_token": "1//05M1l7ZkeR0qTCgYIARAAGAUSNwF-L9IrZBmUgJhBkgJhRs7R8TXPvrqLQGNrGlXV662EL7Spitmq6qcNAO2-4U2gMsFMPYcHEIU",
-  "type": "authorized_user"
-}
-
-
- go run cmd/main.go --audience=995081019036-9jdnn1fv8mddsbsnpn70edta8feviv7k.apps.googleusercontent.com     --adc_file=application_default_credentials.json
-
-```
-
 ### oauth2oidc
 
 Utility function that exchanges a *user* `refresh_token` for a Google `OpenID Connect (OIDC)` token for specific audiences.
